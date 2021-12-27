@@ -127,7 +127,7 @@ h4{
       <?php 
       $status = $_GET['status'];
       if($status == 'fail'){
-          echo "<h4>You are disqualified, buy lottery again.</h4>";
+          echo "<h4>Error occured.</h4>";
       }else if ($status == 'pass'){
           echo "<h3>You have been succesfully entered in Lottery Winner List.</h3>";
       }else{
@@ -148,52 +148,46 @@ h4{
 
 <!-- Backend-->
 
-<?php 
+<?php
 include('db.php');
-if ($_SERVER["REQUEST_METHOD"] == "POST") {  
-$fname = $_POST['firstname'];
-$lname = $_POST['lastname'];
-$phoneno =$_POST['phoneno'];
-$username = $_POST['username'];
-
-$count = 0;
-
-$sqlfetch = "SELECT * FROM LotteryUsers";
-$result = $conn->query($sqlfetch);
-
-
-$sql = "INSERT INTO LotteryUsers (firstname, lastname, phoneno, username)
-VALUES ('$fname', '$lname', '$phoneno', '$username')";
-
-$conn->query($sql);
-
-if ($result->num_rows > 0) {
-  // output data of each row
-  while($row = $result->fetch_assoc()) {
-    if($row["username"] == $username){
-       $count++;
-    }
-  }
-}   
-
-     if($count == 1){
-         $conn->query($sql);
-   header("Location: https://test.startost.com/intern/lottery_system/index.php?status=pass");
-       }
-       else if($count== 3){
-               
-           header("Location: https://test.startost.com/intern/lottery_system/index.php?status=fail");
-       }
-       else if($count == 5){
-           $conn->query($sql);
-           $conn->query($sql);
-           header("Location: https://test.startost.com/intern/lottery_system/index.php?status=pass");
-       }
-else{
-          
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $fname    = $_POST['firstname'];
+    $lname    = $_POST['lastname'];
+    $phoneno  = $_POST['phoneno'];
+    $username = $_POST['username'];
+    
+    
+    $sqlfetch = "SELECT * FROM LotteryUsers";
+    $result   = $conn->query($sqlfetch);
+    
+    $ttb =0;
+    
+    $sql = "INSERT INTO LotteryUsers (firstname, lastname, phoneno, username ,ttb)
+VALUES ('$fname', '$lname', '$phoneno', '$username', 1)";
+    
+    
+    if ($result->num_rows > 0) {
+        // output data of each row
+        while ($row = $result->fetch_assoc()) {
+            if ($row["username"] == $username) {
+                $ttb = $row["ttb"];
+            }
+        }
+    } 
+         if($ttb==0){
+                   if ($conn->query($sql) === TRUE) {
             header("Location: https://test.startost.com/intern/lottery_system/index.php?status=pass");
-       }
-       
-$conn->close();
+        } else {
+            header("Location: https://test.startost.com/intern/lottery_system/index.php?status=fail");
+        }  
+        }else{
+            $sqlttb = "UPDATE LotteryUsers SET ttb='$ttb'+1 WHERE username='$username'";
+                if ($conn->query($sqlttb) === TRUE) {
+                    header("Location: https://test.startost.com/intern/lottery_system/index.php?status=pass");
+                } else {
+                    header("Location: https://test.startost.com/intern/lottery_system/index.php?status=fail");
+                }
+         }
+    $conn->close();
 }
 ?>
