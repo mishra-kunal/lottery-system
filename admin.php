@@ -119,37 +119,79 @@ h4{
 </html>
 
 <!-- PHP backend-->
-<?php 
+<?php
 include('db.php');
-if ($_SERVER["REQUEST_METHOD"] == "POST") {  
-    $admin = $_POST['admin'];
+
+class WinnerSelection{
+    private $users = array();
+    public $total = 0;
+    
+    public function addUser($user)
+    {
+        $user->nofsigns[0] = $this->total;
+        $this->total += $user->ttb;
+        $user->nofsigns[1] = $this->total;
+        $this->users[]    = $user;
+    }
+    
+    public function selectWinner()
+    {
+        $nofsign = rand(0, $this->total);
+        
+        foreach ($this->users as $user)
+            if ($nofsign >= $user->nofsigns[0] && $nofsign <= $user->nofsigns[1])
+                return $user;
+        return false;
+    }
+}
+
+class User{
+    public $uname = '';
+    public $ttb = 0;
+    public $nofsigns = array(0, 0);
+    
+    function __construct($uname, $ttb)
+    {
+        $this->uname  = $uname;
+        $this->ttb = $ttb;
+    }
+}
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $admin     = $_POST['admin'];
     $adminpass = $_POST['adminpass'];
     
-    $winnername = ""; 
-    $winnerlname = "";
-    $winnerphone = "";
-    $winneruname = "";
+
+    $ttb = 0;
     
-if($admin == 'admin' && $adminpass == 'pass')  {
-
-   $sql = "SELECT * FROM LotteryUsers ORDER BY RAND() LIMIT 1";
-
-$result = $conn->query($sql);
-
-while($row = $result->fetch_array()){
-    $winnername = $row['firstname'];
-     $winnerlname = $row['lastname'];
-      $winnerphone = $row['phoneno'];
-     $winneruname =  $row['username'];
-} 
-
-
-echo "<h2>Winner IS!!!!!!!</h3>";
-
-echo "First Name " .$winnername . "<br>". "Last Name " .$winnerlname . "<br>" . "Phone Number " .$winnerphone . "<br>". "Username " .$winneruname . "<br>";
-}  
-else{
-    echo "<h4>Login Failed </h4>";
+    if ($admin == 'admin' && $adminpass == 'pass') {
+        
+        $sql = "SELECT * FROM LotteryUsers ";
+        
+        $result = $conn->query($sql);
+        
+        $winnerSelection = new WinnerSelection();
+        
+        if ($result->num_rows > 0) {
+            // output data of each row
+            while ($row = $result->fetch_assoc()) {
+                $username = $row['username'];
+                $ttb      = $row['ttb'];
+                
+                if ($ttb != 3) { // three time submission user disqualified.
+                    
+                    $winnerSelection->addUser(new User("$username", $ttb));
+                }
+                
+            }
+        }
+        
+        
+        
+        echo "<h3>Winner username  " . $winnerSelection->selectWinner()->uname. "</h3>";
+    } else {
+        echo "<h4>Login Failed </h4>";
+    }
+    
 }
-
-}
+?>
